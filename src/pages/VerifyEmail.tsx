@@ -17,7 +17,7 @@ const VerifyEmail = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:4000/verify-otp', {
+      const res = await fetch('https://swapnest-backend-jdip.onrender.com/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

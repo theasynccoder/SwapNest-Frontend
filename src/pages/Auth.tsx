@@ -50,7 +50,7 @@ const Auth = () => {
         navigate('/dashboard');
       } else {
         // Always send OTP and redirect to verification page
-        const res = await fetch('http://localhost:4000/send-otp', {
+        const res = await fetch('https://swapnest-backend-jdip.onrender.com/send-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: formData.email }),

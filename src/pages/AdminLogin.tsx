@@ -102,7 +102,7 @@ const AdminLogin = () => {
                 {loading ? "Logging in..." : "Admin Login"}
               </Button>
 
-              <Button
+              {/* <Button
                 type="button"
                 variant="secondary"
                 className="w-full"
@@ -110,15 +110,15 @@ const AdminLogin = () => {
                 disabled={loading}
               >
                 Demo Admin Login
-              </Button>
+              </Button> */}
 
-              <p className="text-xs text-muted-foreground text-center mt-4">
+              {/* <p className="text-xs text-muted-foreground text-center mt-4">
                 <strong>Demo credentials:</strong>
                 <br />
                 Email: mamughees292@gmail.com
                 <br />
                 Password: 123456
-              </p>
+              </p> */}
             </form>
           </CardContent>
         </Card>
