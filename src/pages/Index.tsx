@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BookOpen, Laptop, Armchair, ShoppingBag, Shield, MessageCircle, Zap } from 'lucide-react';
+import { ArrowRight, BookOpen, Laptop, Armchair, ShoppingBag, Shield, MessageCircle, Zap, UserCog } from 'lucide-react';
 
 const Index = () => {
   const categories = [
@@ -37,6 +37,10 @@ const Index = () => {
             <Link to="/auth?mode=signup">
               <Button variant="default">Get Started</Button>
             </Link>
+            {/* Admin Login Button */}
+            <Link to="/admin-login">
+              <Button variant="secondary">Admin Login</Button>
+            </Link>
           </div>
         </div>
       </nav>
@@ -70,6 +74,25 @@ const Index = () => {
             </Link>
           </div>
           <p className="text-sm text-muted-foreground mt-4">First listing is absolutely free!</p>
+          {/* Admin Login Card */}
+          <div className="flex justify-center mt-8">
+            <Link to="/admin-login" className="w-full max-w-xs">
+              <div className="border rounded-2xl p-6 bg-card shadow-md hover:shadow-xl transition-all duration-300 text-center cursor-pointer">
+                <div className="flex flex-col items-center mb-3">
+                  <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center mb-2">
+                    <UserCog className="w-7 h-7 text-warning" />
+                  </div>
+                  <span className="font-bold text-lg">Admin Login</span>
+                </div>
+                <p className="text-muted-foreground text-sm">
+                  Login as admin to verify subscription payments and manage the platform.
+                </p>
+                <div className="mt-3">
+                  <Button variant="secondary" className="w-full">Go to Admin Login</Button>
+                </div>
+              </div>
+            </Link>
+          </div>
         </div>
       </section>
 

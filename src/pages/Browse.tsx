@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Filter, Heart, MapPin, ArrowLeft } from 'lucide-react';
+import { Search, Filter, Heart, MapPin, ArrowLeft, LogOut } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Category {
   id: string;
@@ -25,12 +27,45 @@ interface Product {
 }
 
 const Browse = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [unreadCount, setUnreadCount] = useState(0);
+    useEffect(() => {
+      if (user) fetchUnreadCount();
+    }, [user]);
+
+    const fetchUnreadCount = async () => {
+      // Step 1: Get all conversation IDs for the user
+      const { data: conversations } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`);
+      const conversationIds = (conversations || []).map(c => c.id);
+      // Step 2: Get unread messages for those conversations
+      let unreadCount = 0;
+      if (conversationIds.length > 0) {
+        const { count } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .in('conversation_id', conversationIds)
+          .neq('sender_id', user.id)
+          .eq('is_read', false);
+        unreadCount = count || 0;
+      }
+      setUnreadCount(unreadCount);
+    };
   const selectedCategory = searchParams.get('category') || '';
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Signed out successfully');
+    navigate('/');
+  };
 
   useEffect(() => {
     fetchCategories();
@@ -101,12 +136,33 @@ const Browse = () => {
             <span className="font-display text-2xl font-bold text-foreground">SwapNest</span>
           </Link>
           <div className="flex items-center gap-4">
-            <Link to="/dashboard">
-              <Button variant="ghost" size="sm">Dashboard</Button>
-            </Link>
-            <Link to="/auth">
-              <Button size="sm">Sign In</Button>
-            </Link>
+            {user ? (
+              <>
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="sm">Dashboard</Button>
+                </Link>
+                <Link to="/messages" className="relative">
+                  <Button variant="ghost" size="sm">
+                    Messages
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 inline-flex h-2 w-2 rounded-full bg-red-500" />
+                    )}
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="icon" onClick={handleSignOut}>
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/auth">
+                  <Button variant="ghost" size="sm">Sign In</Button>
+                </Link>
+                <Link to="/auth?mode=signup">
+                  <Button size="sm">Sign Up</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>

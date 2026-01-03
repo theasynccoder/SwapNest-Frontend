@@ -12,19 +12,35 @@ const Auth = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(searchParams.get('mode') !== 'signup');
   const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     fullName: '',
     phone: '',
   });
+  // OTP state for signup
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
 
+
+  // Handles both login and signup (with OTP for signup)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       if (isLogin) {
+        // Admin login shortcut
+        if (formData.email === 'mamughees292@gmail.com' && formData.password === '123456') {
+          const { error } = await supabase.auth.signInWithPassword({
+            email: formData.email,
+            password: formData.password,
+          });
+          if (error) throw error;
+          toast.success('Welcome back, Admin!');
+          navigate('/admin/payments');
+          return;
+        }
         const { error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
@@ -33,22 +49,19 @@ const Auth = () => {
         toast.success('Welcome back!');
         navigate('/dashboard');
       } else {
-        const { error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
-            data: {
-              full_name: formData.fullName,
-              phone: formData.phone,
-            },
-          },
+        // Always send OTP and redirect to verification page
+        const res = await fetch('http://localhost:4000/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email }),
         });
-        if (error) throw error;
-        toast.success('Account created! Welcome to SwapNest!');
-        navigate('/dashboard');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to send OTP');
+        toast.success('Verification code sent to your email');
+        // Redirect to verification page with form data
+        navigate('/verify-email', { state: { ...formData } });
       }
-    } catch (error: any) {
+    } catch (error) {
       toast.error(error.message || 'An error occurred');
     } finally {
       setLoading(false);
@@ -99,7 +112,7 @@ const Auth = () => {
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
+              {!isLogin && !otpSent && (
                 <>
                   <div>
                     <Label htmlFor="fullName">Full Name</Label>
@@ -112,6 +125,7 @@ const Auth = () => {
                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                         className="pl-10"
                         required
+                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -127,23 +141,43 @@ const Auth = () => {
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         className="pl-10"
                         required
+                        disabled={loading}
                       />
                     </div>
                   </div>
                 </>
               )}
+              {!isLogin && otpSent && (
+                <div>
+                  <Label htmlFor="otp">Verification Code</Label>
+                  <div className="relative mt-1">
+                    <Input
+                      id="otp"
+                      type="text"
+                      placeholder="Enter the 6-digit code"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      maxLength={6}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Check your email for the code.</p>
+                </div>
+              )}
               <div>
-                <Label htmlFor="email">College Email</Label>
+                <Label htmlFor="email">Email</Label>
                 <div className="relative mt-1">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="you@college.edu"
+                    placeholder="your@email.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="pl-10"
                     required
+                    disabled={loading || otpSent}
                   />
                 </div>
               </div>
@@ -160,13 +194,21 @@ const Auth = () => {
                     className="pl-10"
                     required
                     minLength={6}
+                    disabled={loading || otpSent}
                   />
                 </div>
               </div>
               <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
-                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                {isLogin ? 'Sign In' : 'Create Account'}
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {isLogin ? 'Signing in...' : 'Sending code...'}
+                  </>
+                ) : (
+                  isLogin ? 'Sign In' : 'Create Account'
+                )}
               </Button>
+              {/* No resend code button, handled on verification page */}
             </form>
           </div>
         </div>
