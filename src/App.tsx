@@ -61,7 +61,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import VerifyEmail from "./pages/VerifyEmail";
+// ...existing code...
 import Dashboard from "./pages/Dashboard";
 import Browse from "./pages/Browse";
 import Sell from "./pages/Sell";
@@ -104,7 +104,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
+            {/* Removed VerifyEmail route */}
             <Route path="/browse" element={<Browse />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/payment/:id" element={<Payment />} />

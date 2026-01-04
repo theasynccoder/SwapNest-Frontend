@@ -19,11 +19,9 @@ const Auth = () => {
     fullName: "",
     phone: "",
   });
-  // OTP state for signup
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
+  // ...existing code...
 
-  // Handles both login and signup (with OTP for signup)
+  // Handles both login and signup (no verification)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -51,20 +49,20 @@ const Auth = () => {
         toast.success("Welcome back!");
         navigate("/dashboard");
       } else {
-        // Always send OTP and redirect to verification page
-        const res = await fetch(
-          "https://swapnest-backend-jdip.onrender.com/send-otp",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: formData.email }),
-          }
-        );
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to send OTP");
-        toast.success("Verification code sent to your email");
-        // Redirect to verification page with form data
-        navigate("/verify-email", { state: { ...formData } });
+        // Directly create account in Supabase
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              full_name: formData.fullName,
+              phone: formData.phone,
+            },
+          },
+        });
+        if (error) throw error;
+        toast.success("Account created! You can now sign in.");
+        setIsLogin(true);
       }
     } catch (error) {
       toast.error(error.message || "An error occurred");
@@ -126,7 +124,7 @@ const Auth = () => {
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && !otpSent && (
+              {!isLogin && (
                 <>
                   <div>
                     <Label htmlFor="fullName">Full Name</Label>
@@ -165,26 +163,6 @@ const Auth = () => {
                   </div>
                 </>
               )}
-              {!isLogin && otpSent && (
-                <div>
-                  <Label htmlFor="otp">Verification Code</Label>
-                  <div className="relative mt-1">
-                    <Input
-                      id="otp"
-                      type="text"
-                      placeholder="Enter the 6-digit code"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      maxLength={6}
-                      required
-                      disabled={loading}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Check your email for the code.
-                  </p>
-                </div>
-              )}
               <div>
                 <Label htmlFor="email">Email</Label>
                 <div className="relative mt-1">
@@ -199,7 +177,7 @@ const Auth = () => {
                     }
                     className="pl-10"
                     required
-                    disabled={loading || otpSent}
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -218,7 +196,7 @@ const Auth = () => {
                     className="pl-10"
                     required
                     minLength={6}
-                    disabled={loading || otpSent}
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -232,7 +210,7 @@ const Auth = () => {
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {isLogin ? "Signing in..." : "Sending code..."}
+                    {isLogin ? "Signing in..." : "Creating account..."}
                   </>
                 ) : isLogin ? (
                   "Sign In"
